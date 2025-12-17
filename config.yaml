@@ -1,0 +1,221 @@
+complications_dict:
+  cerebral_vasospasm:
+  - I67.80
+  - I67.88
+  - I67.9
+  delirium:
+  - F05.0
+  - F05.1
+  - F05.8
+  - F05.9
+  liver_failure:
+  - K72.0
+  - K72.71
+  myocardial_infarction:
+  - I21.0
+  - I21.1
+  - I21.2
+  - I21.3
+  - I21.4
+  - I21.9
+  pneumonia:
+  - J18.0
+  - J18.1
+  - J18.2
+  - J18.8
+  - J18.9
+  pulmonary_embolism:
+  - I26.0
+  - I26.9
+  renal_failure:
+  - N17.01
+  - N17.02
+  - N17.8
+  - N17.81
+  - N17.82
+  - N17.83
+  - N17.89
+  - N17.9
+  - N17.92
+  - N17.93
+  - N17.99
+  sepsis:
+  - A40.2
+  - A40.3
+  - A40.8
+  - A41.0
+  - A41.1
+  - A41.2
+  - A41.51
+  - A41.52
+  - A41.58
+  - A41.8
+  - A41.9
+  stroke:
+  - I63.0
+  - I63.2
+  - I63.3
+  - I63.4
+  - I63.5
+  - I63.6
+  - I63.8
+  - I63.9
+complications_dict_short:
+  cerebral_vasospasm: I67
+  delirium: F05
+  liver_failure: K72
+  myocardial_infarction: I21
+  pneumonia: J18
+  pulmonary_embolism: I26
+  renal_failure: N17
+  sepsis: A40
+  stroke: I63
+csv:
+  descriptives: data/out/descriptives.csv
+  multi_times_measurements: data/multi_time_measurements.csv
+  one_time_measurements: data/one_time_measurements.csv
+diagnoses:
+- benign_neoplasm
+- cerebral_aneurysm
+- epilepsy
+- intracranial_hemorrhage
+- malignant_neoplasm
+- neoplasm
+- SAH
+- TBI
+- trigeminus
+- other_aneurysm_dissection
+feature_names:
+  age: Age in years
+  already_intubated: Mechanically ventilated before surgery
+  auc_paO2: $paO_2$ AUC in $mmHg^2$
+  bmi: BMI in $kg/m^2$
+  co2: $CO_2$ in mmHg
+  compliance: static pulmonary compliance in $ml/cm H_2O$
+  creatinine: Preoperative creatinine value
+  diastolic: diastolic blood pressure in mmHg
+  fio2: $FiO_2$
+  first_horowitz: initially measured p/F ratio in mmHg
+  gadrey: "Gadrey\u2019s $paO_2$ in mmHg"
+  heart_rate: heart rate in 1/min
+  hemoglobin: hemoglobin in g/dL
+  horowitz: p/F ratio in mmHg
+  idx: index of measurement
+  incision_closure_time: incision to closure time in min
+  intervention_count: number of surgeries during hospital stay
+  last_horowitz: last measured p/F ratio in mmHg
+  los: postoperative (in-hospital) length of stay in days
+  max_paO2: max. $paO_2$ value in mmHg
+  mean_art_press: mean arterial pressure in mmHg
+  mv_time: mechanical ventilation time in min
+  norm_auc_paO2: $_{norm}paO_2$
+  norm_auc_pf: $_{norm}p/F ratio$
+  not_extubated: no extubation after surgery
+  pAO2: $pAO_2$ in mmHg
+  paO2_combined: combination of measured and predicted $paO_2$
+  ph: pH
+  respiratory_rate: respiratory rate in 1/min
+  rmv: respiratory minute volume in L
+  sex_male: sex (0=female)
+  spo2: $SpO_2$ in %
+  systolic: systolic blood pressure in mmHg
+  temperature: "temperature in \xB0C"
+  timepoint_intraop: measurement taken intraoperatively
+long_names:
+  SAH: Subarachnoid hemorrhage
+  TBI: Traumatic brain injury
+  benign_neoplasm: Benign neoplasm
+  cerebral_aneurysm: Cerebral aneurysm
+  cerebral_vasospasm: Cerebral vasospasm
+  delirium: Delirium
+  epilepsy: Epilepsy
+  intracranial_hemorrhage: Intracranial hemorrhage
+  ischaemic_stroke: Ischaemic stroke
+  liver_failure: Liver failure
+  malignant_neoplasm: Malignant neoplasm
+  myocardial_infarction: Myocardial infarction
+  neoplasm: Neoplasm of uncertain or unknown behavior
+  other: Other diseases of the brain
+  other_aneurysm_dissection: Other aneurysms and dissections
+  pneumonia: Pneumonia
+  pulmonary_embolism: Pulmonary embolism
+  renal_failure: Renal failure
+  sepsis: Sepsis
+  stroke: Ischaemic stroke
+  trigeminus: Facial nerve disorders and disorders of trigeminal nerve
+multi_measurements:
+- co2
+- compliance
+- diastolic
+- fio2
+- gadrey
+- heart_rate
+- hemoglobin
+- idx
+- last_horowitz
+- mean_art_press
+- paO2_combined
+- pAO2
+- ph
+- respiratory_rate
+- rmv
+- systolic
+- spo2
+- temperature
+- timepoint_intraop
+- horowitz
+one_measurements:
+- age
+- already_intubated
+- auc_paO2
+- bmi
+- creatinine
+- first_horowitz
+- los
+- mv_time
+- not_extubated
+- identifier
+- sex_male
+- max_paO2
+- incision_closure_time
+- norm_auc_paO2
+- norm_auc_pf
+- intervention_count
+pickle:
+  after_exclusion: data/out/data_after_exclusion.pickle
+  analysis: data/analysis_df.pickle
+  auc_values_intra: data/out/auc_values_intra.pickle
+  auc_values_peri: data/out/auc_values_peri.pickle
+  estimator22: data/fitted_estimator_22.pickle
+  estimator23: data/fitted_estimator_23.pickle
+  for_imputation: data/out/for_imputation.pickle
+  imputed_data: data/out/imputed_data.pickle
+  paO2_imputed_data: data/out/paO2_imputed_data.pickle
+  post_abg: data/out/post_abg_data.pickle
+  pre_abg: data/out/pre_abg_data.pickle
+  scaler_x: data/out/scaler_x.pickle
+  scaler_x_lh: data/out/scaler_x_lh.pickle
+  scaler_y: data/out/scaler_y.pickle
+  selected_features: data/selected_features.pickle
+  training_data: data/out/training_data.pickle
+  without_missings: data/out/data_after_missings.pickle
+procedure_codes:
+- 5-010
+- 5-015
+- 5-025
+- 5-021
+- 5-018
+- 5-022
+- 5-024
+- 5-023
+- 5-012
+- 5-013
+- 5-028
+- 5-011
+- 5-020
+- 5-016
+- 5-029
+- 5-014
+- 5-017
+- 5-026
+version: 2.0
