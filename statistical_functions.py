@@ -348,6 +348,7 @@ def unique_cross_product(list1, list2):
 def effect_size(dataframe, agg, vals, row_indices, col_indices):
     # calculate effect size independently of p values
     agg_vals = [x[0] for x in list(dataframe.groupby(agg))] # how many distinct values exist for the aggregation/groupby
+    effect_sizes = []
     for (row_index, col_index) in unique_cross_product(row_indices, col_indices):
     # for i in range(len(row_indices)):
     #     row_index = row_indices[i]
@@ -394,7 +395,8 @@ def effect_size(dataframe, agg, vals, row_indices, col_indices):
             print(f"\n{row_index+1}, {col_index+1}: Effect size: Hedges' g: {round(d,2)} ({d_text})")
         else:
             print(f"\n{row_index+1}, {col_index+1}: Hedges' g <0.01")
-        # return d
+        effect_sizes.append((row_index, col_index, d))
+    return effect_sizes
 
 def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
     ph_dunn = 1
@@ -411,12 +413,14 @@ def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
             row_indices, col_indices = np.where(
                 pd.DataFrame(sp.sign_table(ph_dunn)).isin(["*", "**", "***"])
             )
-            effect_size(dataframe, agg, vals, row_indices, col_indices)
+            print(effect_size(dataframe, agg, vals, row_indices, col_indices))
+            return (ph_dunn, effect_size(dataframe, agg, vals, row_indices, col_indices))
     elif ph_dunn >= 0.05:
         print("No significance found.")
         ## effect size
         agg_vals = [x[0] for x in list(dataframe.groupby(agg))]
-        effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals))))
+        print(effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
+        return (None, effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
 
 
 def posthoc_anova(vals: list, dataframe: object, agg: str) -> None:
@@ -450,8 +454,8 @@ def compare_median(vals: list, dataframe: object, agg: str, pr: bool = True) -> 
         if not pr: # print only if not printed before
             print(dataframe.groupby([agg]).agg({vals: ["median", "mean", "count"]}))
         print("\n... Post hoc test...")
-    posthoc_median(vals, dataframe, agg, p)
-    return p
+    ph_dunn, effect_sizes = posthoc_median(vals, dataframe, agg, p)
+    return p, ph_dunn, effect_sizes
 
 
 def compare_variance(vals, dataframe, agg, pr=True):
