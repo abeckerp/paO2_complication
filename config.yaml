@@ -3,11 +3,6 @@ complications_dict:
   - I67.80
   - I67.88
   - I67.9
-  delirium:
-  - F05.0
-  - F05.1
-  - F05.8
-  - F05.9
   liver_failure:
   - K72.0
   - K72.71
@@ -62,7 +57,6 @@ complications_dict:
   - I63.9
 complications_dict_short:
   cerebral_vasospasm: I67
-  delirium: F05
   liver_failure: K72
   myocardial_infarction: I21
   pneumonia: J18
@@ -127,7 +121,6 @@ long_names:
   benign_neoplasm: Benign neoplasm
   cerebral_aneurysm: Cerebral aneurysm
   cerebral_vasospasm: Cerebral vasospasm
-  delirium: Delirium
   epilepsy: Epilepsy
   intracranial_hemorrhage: Intracranial hemorrhage
   ischaemic_stroke: Ischaemic stroke
