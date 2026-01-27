@@ -1,11 +1,14 @@
+from itertools import combinations
+from typing import Union
+
 import numpy as np
 import pandas as pd
+import scikit_posthocs as sp
 from scipy.stats import chi2_contingency, kruskal
 from scipy.stats import norm as snorm
-from itertools import combinations
+from statsmodels.discrete.discrete_model import Logit
 from statsmodels.sandbox.stats.multicomp import multipletests
-import scikit_posthocs as sp
-from typing import Union
+
 
 def posthoc_dunn(
         a: Union[list, np.ndarray, pd.DataFrame],
@@ -201,17 +204,19 @@ def return_table(df: object, var_list: list, dimensions: int = None) -> list:
         dimensions = len(var_list)
 
     if dimensions > 1:
-        print(
-            f"Table that is converted to an array:\n{df.groupby(var_list).size().unstack(fill_value=0).stack()}"
-        )
+        print(df.groupby(var_list).size().unstack(fill_value=0).stack())
+        # print(
+        #     f"Table that is converted to an array:\n{df.groupby(var_list).size().unstack(fill_value=0).stack()}"
+        # )
         np_list = np.array(df.groupby(var_list).size().unstack(fill_value=0).stack())
 
     else:
-        print(f"Table that is converted to an array:\n{df.groupby(var_list).size()}")
+        # print(f"Table that is converted to an array:\n{df.groupby(var_list).size()}")
+        print(df.groupby(var_list).size())
         np_list = np.array(df.groupby(var_list).size())
 
     result = [np_list[i : i + dimensions] for i in range(0, len(np_list), dimensions)]
-    print(f"Splitted set that is returned based on {dimensions} dimensions:\n{result}")
+    # print(f"Splitted set that is returned based on {dimensions} dimensions:\n{result}")
     return result
 
 
@@ -479,3 +484,25 @@ def compare_variance(vals, dataframe, agg, pr=True):
         print("... Post hoc test...")
         posthoc_anova(vals, dataframe, agg)
     return p
+
+def logistic_regression(y, X, log=True, odds_ratio=False):
+    model = Logit(y, np.log(X) if log else X)
+    result = model.fit(disp=0)
+    if result.prsquared<0:
+        print("Warning: Pseudo R-squared is negative, indicating a poor model fit.".upper())
+    if result.llnull<0:
+        print("Warning: Log-likelihood of the null model is negative, indicating a poor model fit.".upper())
+    print(result.summary())
+    coef = result.params.values[0]
+    OR_10pct = np.exp(coef * np.log(1.1)) # odds ratio for 10% increase
+    ci_low, ci_high = result.conf_int().values[0]
+
+    OR_10pct_ci = (
+        np.exp(ci_low * np.log(1.1)),
+        np.exp(ci_high * np.log(1.1))
+    )
+    # „Das normalisierte paO₂ wurde logarithmiert in das logistische Regressionsmodell aufgenommen. Die Odds Ratios beziehen sich auf eine multiplikative Änderung des paO₂. Eine 10% Erhöhung des paO₂ war mit einer OR von 0,XX (95 % KI 0,YY–0,ZZ) assoziiert.“
+    print(f"The estimated OR change by {OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}] for each 10% increase of the independent variable (p-value: {result.pvalues.values[0]:.4f})")
+    if odds_ratio:
+        return result.pvalues.values[0], OR_10pct# f"{OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}]"
+    return result.pvalues.values[0]
