@@ -13,7 +13,7 @@ Due to data privacy issues, only rendered notebooks are provided.
 - 5_Patient_characteristics: Descriptive data
 - 6_Postop_complications: Analysis of postoperative complications
 - 7_Prevalence_ORs: prevalences and odds ratios of complications given a specific diagnosis
-- Confounding_bias: Analysis of potential confounders or bias
+- 8_Confounding_bias: Analysis of potential confounders or bias
 
 ## License
 
