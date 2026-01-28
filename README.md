@@ -10,7 +10,10 @@ Due to data privacy issues, only rendered notebooks are provided.
 - 2_Pre_ABG: prediction of paO<sub>2</sub> values before the first arterial blood gas analysis was available
 - 3_Post_ABG: refitting and prediction of paO<sub>2</sub> values after the first arterial blood gas analysis was available
 - 4_Calculate_AUC: calculation of paO<sub>2</sub> integral and normalization by intervention time
-- 5_Normalized_Analysis: analysis of differences and postoperative complications
+- 5_Patient_characteristics: Descriptive data
+- 6_Postop_complications: Analysis of postoperative complications
+- 7_Prevalence_ORs: prevalences and odds ratios of complications given a specific diagnosis
+- Confounding_bias: Analysis of potential confounders or bias
 
 ## License
 
