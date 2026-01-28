@@ -176,9 +176,10 @@ one_measurements:
 - intervention_count
 pickle:
   after_exclusion: data/out/data_after_exclusion.pickle
-  analysis: data/analysis_df.pickle
+  analysis: data/out/analysis_df.pickle
   auc_values_intra: data/out/auc_values_intra.pickle
   auc_values_peri: data/out/auc_values_peri.pickle
+  data_for_analysis: data/out/data_for_analysis.pickle
   estimator22: data/fitted_estimator_22.pickle
   estimator23: data/fitted_estimator_23.pickle
   for_imputation: data/out/for_imputation.pickle

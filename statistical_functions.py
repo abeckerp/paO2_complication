@@ -1,9 +1,11 @@
 from itertools import combinations
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scikit_posthocs as sp
+import scipy.stats as stats
 from scipy.stats import chi2_contingency, kruskal
 from scipy.stats import norm as snorm
 from statsmodels.discrete.discrete_model import Logit
@@ -90,13 +92,13 @@ def posthoc_dunn(
     n = len(x.index)
     x_groups_unique = x[_group_col].unique()
     x_len = x_groups_unique.size
-    x_lens = x.groupby(_group_col)[_val_col].count()
+    x_lens = x.groupby(_group_col, observed=False)[_val_col].count()
 
     x['ranks'] = x[_val_col].rank()
-    x_ranks_avg = x.groupby(_group_col)['ranks'].mean()
+    x_ranks_avg = x.groupby(_group_col, observed=False)['ranks'].mean()
 
     # ties
-    vals = x.groupby('ranks').count()[_val_col].values
+    vals = x.groupby('ranks', observed=False).count()[_val_col].values
     tie_sum = np.sum(vals[vals != 1] ** 3 - vals[vals != 1])
     tie_sum = 0 if not tie_sum else tie_sum
     x_ties = tie_sum / (12. * (n - 1))
@@ -122,7 +124,6 @@ def posthoc_dunn(
     np.fill_diagonal(z_vals, 1)
     return pd.DataFrame(vs, index=x_groups_unique, columns=x_groups_unique), pd.DataFrame(z_vals, index=x_groups_unique, columns=x_groups_unique)
 
-
 def get_asterisks_for_pval(p_val: float, alpha: float = 0.05) -> str:
     """Receives the p-value and returns asterisks string."""
     if p_val > alpha:  # bigger than alpha
@@ -139,7 +140,6 @@ def get_asterisks_for_pval(p_val: float, alpha: float = 0.05) -> str:
 
     return p_text  # string of asterisks
 
-
 def run_chisq_on_combination(df: object, combinations_tuple: list) -> float:
     """Receives a dataframe and a combinations tuple and returns p-value after performing chisq test."""
     assert (
@@ -150,7 +150,6 @@ def run_chisq_on_combination(df: object, combinations_tuple: list) -> float:
     ]
     chi2, p, dof, ex = chi2_contingency(new_df, correction=True)
     return p
-
 
 def chisq_and_posthoc_corrected(
     df: object, correction_method: str = "fdr_bh", alpha: float = 0.05
@@ -188,7 +187,6 @@ def chisq_and_posthoc_corrected(
             )
         )
 
-
 def get_p_values(*args: list) -> float:
     obs = np.array([*args])
     # print("normal - mild - moderate - severe")
@@ -198,27 +196,25 @@ def get_p_values(*args: list) -> float:
     chisq_and_posthoc_corrected(pd.DataFrame(obs))
     return p
 
-
 def return_table(df: object, var_list: list, dimensions: int = None) -> list:
     if dimensions == None:
         dimensions = len(var_list)
 
     if dimensions > 1:
-        print(df.groupby(var_list).size().unstack(fill_value=0).stack())
+        print(df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack())
         # print(
         #     f"Table that is converted to an array:\n{df.groupby(var_list).size().unstack(fill_value=0).stack()}"
         # )
-        np_list = np.array(df.groupby(var_list).size().unstack(fill_value=0).stack())
+        np_list = np.array(df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack())
 
     else:
         # print(f"Table that is converted to an array:\n{df.groupby(var_list).size()}")
-        print(df.groupby(var_list).size())
-        np_list = np.array(df.groupby(var_list).size())
+        print(df.groupby(var_list, observed=False).size())
+        np_list = np.array(df.groupby(var_list, observed=False).size())
 
     result = [np_list[i : i + dimensions] for i in range(0, len(np_list), dimensions)]
     # print(f"Splitted set that is returned based on {dimensions} dimensions:\n{result}")
     return result
-
 
 def return_dict(df: object, var_list: list, dimensions: int = None) -> list:
     if dimensions == None:
@@ -226,14 +222,13 @@ def return_dict(df: object, var_list: list, dimensions: int = None) -> list:
 
     if dimensions > 1:
         print(
-            f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list).size().unstack(fill_value=0).stack()}"
+            f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack()}"
         )
-        return df.groupby(var_list).size().unstack(fill_value=0).stack().to_dict()
+        return df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack().to_dict()
     print(
-        f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list).size()}"
+        f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list, observed=False).size()}"
     )
-    return df.groupby(var_list).size().to_dict()
-
+    return df.groupby(var_list, observed=False).size().to_dict()
 
 def compare_frequencies(
     d: dict, exp: list = None, transpose: bool = True, pr: bool = True
@@ -352,7 +347,7 @@ def unique_cross_product(list1, list2):
 
 def effect_size(dataframe, agg, vals, row_indices, col_indices):
     # calculate effect size independently of p values
-    agg_vals = [x[0] for x in list(dataframe.groupby(agg))] # how many distinct values exist for the aggregation/groupby
+    agg_vals = [x[0] for x in list(dataframe.groupby(agg, observed=False))] # how many distinct values exist for the aggregation/groupby
     effect_sizes = []
     for (row_index, col_index) in unique_cross_product(row_indices, col_indices):
     # for i in range(len(row_indices)):
@@ -406,7 +401,7 @@ def effect_size(dataframe, agg, vals, row_indices, col_indices):
 def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
     ph_dunn = 1
     if p < 0.05:
-        x = [group[vals].values for name, group in dataframe.groupby(agg)]
+        x = [group[vals].values for name, group in dataframe.groupby(agg, observed=False)]
         ph_dunn, zvalues = posthoc_dunn(x, p_adjust="fdr_bh", sort=True)
 
         if ((ph_dunn < 0.05).any()).any():
@@ -423,13 +418,12 @@ def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
     elif ph_dunn >= 0.05:
         print("No significance found.")
         ## effect size
-        agg_vals = [x[0] for x in list(dataframe.groupby(agg))]
+        agg_vals = [x[0] for x in list(dataframe.groupby(agg, observed=False))]
         print(effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
         return (None, effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
 
-
 def posthoc_anova(vals: list, dataframe: object, agg: str) -> None:
-    x = [group[vals].values for name, group in dataframe.groupby(agg)]
+    x = [group[vals].values for name, group in dataframe.groupby(agg, observed=False)]
     ph_ttest = sp.posthoc_ttest(x, p_adjust="fdr_bh", sort=True)
     if ((ph_ttest < 0.05).any()).any():
         print(sp.sign_table(ph_ttest))
@@ -437,15 +431,14 @@ def posthoc_anova(vals: list, dataframe: object, agg: str) -> None:
     else:
         print("No significance found.")
 
-
 def compare_median(vals: list, dataframe: object, agg: str, pr: bool = True) -> float:
     if pr:
-        print(dataframe.groupby([agg]).agg({vals: ["median", "mean", "count"]}))
+        print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
     try:
         z, p = kruskal(
             *[
                 group[vals].values
-                for name, group in dataframe.groupby(agg)
+                for name, group in dataframe.groupby(agg, observed=False)
                 if len(group) >= 5
             ]
         )
@@ -457,11 +450,10 @@ def compare_median(vals: list, dataframe: object, agg: str, pr: bool = True) -> 
         print(f"p-value: {round(p,4)}")
     if p < 0.05:
         if not pr: # print only if not printed before
-            print(dataframe.groupby([agg]).agg({vals: ["median", "mean", "count"]}))
+            print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
         print("\n... Post hoc test...")
     ph_dunn, effect_sizes = posthoc_median(vals, dataframe, agg, p)
     return p, ph_dunn, effect_sizes
-
 
 def compare_variance(vals, dataframe, agg, pr=True):
     if pr:
@@ -470,7 +462,7 @@ def compare_variance(vals, dataframe, agg, pr=True):
         p = scipy.stats.f_oneway(
             *[
                 group[vals].values
-                for name, group in dataframe.groupby(agg)
+                for name, group in dataframe.groupby(agg, observed=False)
                 if len(group) >= 2
             ]
         )[1]
@@ -480,7 +472,7 @@ def compare_variance(vals, dataframe, agg, pr=True):
     if pr:
         print(f"p-value: {round(p,4)}")
     if p < 0.05:
-        print(dataframe.groupby([agg]).agg({vals: ["median", "mean", "count"]}))
+        print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
         print("... Post hoc test...")
         posthoc_anova(vals, dataframe, agg)
     return p
@@ -506,3 +498,20 @@ def logistic_regression(y, X, log=True, odds_ratio=False):
     if odds_ratio:
         return result.pvalues.values[0], OR_10pct# f"{OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}]"
     return result.pvalues.values[0]
+
+def qq_plot(data, title=None, axs=None):
+    """Generate a QQ plot of the data against a normal distribution."""
+    if axs is None:
+        fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+
+    stats.probplot(data, dist="norm", plot=axs[0])
+    stats.probplot(np.log(data), dist="norm", plot=axs[1])
+    if title:
+        fig.suptitle(title, fontsize=16)
+    else:
+        fig.suptitle('QQ Plots', fontsize=16)
+    axs[0].set_title("Data")
+    axs[1].set_title("Log-transformed Data")
+    axs[0].grid(True)
+    axs[1].grid(True)
+    # return axs
