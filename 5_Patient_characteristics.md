@@ -1,8 +1,7 @@
-# Continuous $paO_2$ Prediction and Postoperative Complications in Neurosurgical Patients
-## Patient Characteristics
-
+# Continuous $paO_2$ Prediction and Postoperative Complications in
+Neurosurgical Patients
 Andrea S. Gutmann
-2026-02-02
+2026-02-09
 
 # Preprocessing
 
@@ -894,29 +893,49 @@ with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
 sdc5_data = []
+sdc5_figure_data = []
+annot_data = []
 
 for c, (n,p) in sorted(compl_dict.items(), key=lambda x: -x[1][0]):    
-    row = []
+    sdc5_row = []
+    annot_row = []
+    sdc5_figure_row = []
     for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0]):
-        row.append(
-            len(analysis_df.loc[(analysis_df[d] == True) & (analysis_df[c] == True), :])
-        )
-    sdc5_data.append(row)
+        cell_count = analysis_df.loc[(analysis_df[d] == True) & (analysis_df[c] == True), :].shape[0]
+        sdc5_row.append(cell_count)
+        annot_row.append(f"{100/n*cell_count:.1f}%\n(N={cell_count})")
+        sdc5_figure_row.append(100/n*cell_count)
+    sdc5_data.append(sdc5_row)
+    annot_data.append(annot_row)
+    sdc5_figure_data.append(sdc5_figure_row)
 
 sdc5 = pd.DataFrame(
-    sdc5_data,
-    columns=[
+    np.array(sdc5_data).T,
+    index=[
         f"{config.get('long_names').get(d)} (N={n:,})"
         for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0])
     ],
+    columns=[
+        f"{config.get('long_names').get(c)} (N={n:,})"
+        for c, (n,p) in sorted(compl_dict.items(), key=lambda x: -x[1][0])
+    ],
+)
+sdc5_figure = pd.DataFrame(
+    np.array(sdc5_figure_data).T,
     index=[
+        f"{config.get('long_names').get(d)} (N={n:,})"
+        for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0])
+    ],
+    columns=[
         f"{config.get('long_names').get(c)} (N={n:,})"
         for c, (n,p) in sorted(compl_dict.items(), key=lambda x: -x[1][0])
     ],
 )
 
-display(sdc5.T)
-sdc5.T.to_csv("./data/out/diag_comp.csv")
+display(sdc5)
+display(sdc5_figure)
+
+sdc5.to_csv("./data/out/diag_comp.csv")
 ```
 
 <div>
@@ -948,10 +967,49 @@ sdc5.T.to_csv("./data/out/diag_comp.csv")
 
 </div>
 
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+&#10;    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+&#10;    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+
+|  | Pneumonia (N=187) | Ischaemic stroke (N=171) | Pulmonary embolism (N=168) | Cerebral vasospasm (N=126) | Sepsis (N=67) | Renal failure (N=55) | Myocardial infarction (N=17) | Liver failure (N=12) |
+|----|----|----|----|----|----|----|----|----|
+| Benign neoplasm (N=2,009) | 1.7919 | 1.7919 | 4.6789 | 0.5475 | 0.4978 | 0.3982 | 0.1493 | 0.0996 |
+| Malignant neoplasm (N=963) | 3.8422 | 1.5576 | 2.5961 | 1.0384 | 0.9346 | 0.7269 | 0.1038 | 0.0000 |
+| Intracranial hemorrhage (N=471) | 9.3418 | 6.3694 | 2.7601 | 3.8217 | 3.8217 | 4.6709 | 1.2739 | 0.2123 |
+| Cerebral aneurysm (N=422) | 1.8957 | 5.9242 | 3.5545 | 4.9763 | 1.4218 | 0.2370 | 0.7109 | 0.2370 |
+| Other diseases of the brain (N=390) | 4.3590 | 4.8718 | 2.0513 | 1.2821 | 2.5641 | 1.0256 | 0.0000 | 0.2564 |
+| Traumatic brain injury (N=217) | 12.9032 | 4.6083 | 2.7650 | 2.3041 | 3.6866 | 3.6866 | 0.9217 | 1.3825 |
+| Epilepsy (N=204) | 0.4902 | 1.9608 | 0.4902 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Facial nerve disorders and disorders of trigeminal nerve (N=193) | 0.0000 | 1.0363 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+| Subarachnoid hemorrhage (N=189) | 14.2857 | 25.3968 | 5.8201 | 42.3280 | 8.4656 | 4.7619 | 1.0582 | 2.6455 |
+| Neoplasm of uncertain or unknown behavior (N=101) | 5.9406 | 2.9703 | 2.9703 | 2.9703 | 1.9802 | 1.9802 | 0.9901 | 0.0000 |
+| Other aneurysms and dissections (N=27) | 3.7037 | 3.7037 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0.0000 |
+
+</div>
+
 Figure 2
 
 ``` python
-ax = sns.heatmap(sdc5.T, linewidth=0.5, annot=True, cmap = 'gray_r')
+ax = sns.heatmap(
+    sdc5_figure,
+    linewidth=0.5,
+    annot=np.array(annot_data).T,
+    cmap="gray_r",
+    fmt="s",
+    annot_kws={"size": 7.5},
+)
+# add label to colorbar
+cbar = ax.collections[0].colorbar
+cbar.set_label("Percentage (%)")
 plt.savefig("./plots/heatmap.png", dpi=300, bbox_inches="tight")
 ax.set_title("Heatmap of postoperative complications per diagnosis")
 

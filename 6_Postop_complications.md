@@ -1,8 +1,7 @@
-# Continuous $paO_2$ Prediction and Postoperative Complications in Neurosurgical Patients
-## Postoperative Complications
-
+# Continuous $paO_2$ Prediction and Postoperative Complications in
+Neurosurgical Patients
 Andrea S. Gutmann
-2026-02-02
+2026-02-09
 
 # Preprocessing
 
@@ -1828,9 +1827,14 @@ analysis_df["paO2_bin"] = analysis_df["paO2_bin"].cat.rename_categories(
     {k: v for k, v in zip(["low", "mid-low", "mid", "mid-high", "high"], new_labels)}
 )
 
-comp_rate = analysis_df.groupby("paO2_bin", observed=False)[list(complications)].mean()
+comp_rate = analysis_df.groupby("paO2_bin", observed=False)[list(complications)].mean()*100
 
-ax = sns.heatmap(comp_rate.T, cmap="gray_r", annot=True, fmt=".2f")
+annot_data = comp_rate.T.map(lambda x: f"{x:.1f}%")
+ax = sns.heatmap(comp_rate.T, cmap="gray_r", annot=annot_data, fmt="s")
+# add label to colorbar
+cbar = ax.collections[0].colorbar
+cbar.set_label("Percentage (%)")
+
 ax.set_yticklabels([config.get("long_names")[i] for i in complications])
 plt.xlabel("$_{norm}paO_2$ range")
 plt.ylabel("Complication")
@@ -3277,7 +3281,7 @@ table2.to_csv("./data/out/table2.csv")
 Table 2 Logistic Regression
 
 ``` python
-table2_logreg = pd.DataFrame(table2_data_logreg, columns = ["Group/Condition", "Outcome", "Odds Ratio with 95% CI (normpaO2)", "Accuracy", "p-value", "Odds"])
+table2_logreg = pd.DataFrame(table2_data_logreg, columns = ["Group/Condition", "Outcome", "Odds Ratio with 95% CI", "Accuracy", "p-value", "Odds"])
 display(table2_logreg)
 table2_logreg.to_csv("./data/out/table2_logreg.csv")
 ```
@@ -3295,7 +3299,7 @@ table2_logreg.to_csv("./data/out/table2_logreg.csv")
     }
 </style>
 
-|  | Group/Condition | Outcome | Odds Ratio with 95% CI (normpaO2) | Accuracy | p-value | Odds |
+|  | Group/Condition | Outcome | Odds Ratio with 95% CI | Accuracy | p-value | Odds |
 |----|----|----|----|----|----|----|
 | 0 | All patients | Survival Status | 0.9703 \[0.9619, 0.9788\] | 0.5301 | 0.0204 | reduced |
 | 1 | Benign neoplasm | Survival Status | 1.0537 \[1.0377, 1.0700\] | 0.5411 | 0.0243 | increased |

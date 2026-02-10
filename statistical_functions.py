@@ -8,17 +8,40 @@ import scikit_posthocs as sp
 import scipy.stats as stats
 from scipy.stats import chi2_contingency, kruskal
 from scipy.stats import norm as snorm
+from sklearn.linear_model import LogisticRegression
 from statsmodels.discrete.discrete_model import Logit
 from statsmodels.sandbox.stats.multicomp import multipletests
 
+def to_roman(n: int) -> str:
+    """Convert an integer to a Roman numeral."""
+    val = [
+        5,
+        4,
+        1,
+    ]
+    syms = [
+        "V",
+        "IV",
+        "I",
+    ]
+    roman_num = ""
+    i = 0
+    while n > 0:
+        for _ in range(n // val[i]):
+            roman_num += syms[i]
+            n -= val[i]
+        i += 1
+    return roman_num
+
 
 def posthoc_dunn(
-        a: Union[list, np.ndarray, pd.DataFrame],
-        val_col: str = None,
-        group_col: str = None,
-        p_adjust: str = None,
-        sort: bool = True) -> pd.DataFrame:
-    '''Post hoc pairwise test for multiple comparisons of mean rank sums
+    a: Union[list, np.ndarray, pd.DataFrame],
+    val_col: str = None,
+    group_col: str = None,
+    p_adjust: str = None,
+    sort: bool = True,
+) -> pd.DataFrame:
+    """Post hoc pairwise test for multiple comparisons of mean rank sums
     (Dunn's test). May be used after Kruskal-Wallis one-way analysis of
     variance by ranks to do pairwise comparisons [1]_, [2]_.
 
@@ -77,13 +100,14 @@ def posthoc_dunn(
 
     >>> x = [[1,2,3,5,1], [12,31,54, np.nan], [10,12,6,74,11]]
     >>> sp.posthoc_dunn(x, p_adjust = 'holm')
-    '''
+    """
+
     def compare_dunn(i, j):
         diff = np.abs(x_ranks_avg.loc[i] - x_ranks_avg.loc[j])
-        A = n * (n + 1.) / 12.
-        B = (1. / x_lens.loc[i] + 1. / x_lens.loc[j])
+        A = n * (n + 1.0) / 12.0
+        B = 1.0 / x_lens.loc[i] + 1.0 / x_lens.loc[j]
         z_value = diff / np.sqrt((A - x_ties) * B)
-        p_value = 2. * snorm.sf(np.abs(z_value))
+        p_value = 2.0 * snorm.sf(np.abs(z_value))
         return p_value, z_value
 
     x, _val_col, _group_col = sp.__convert_to_df(a, val_col, group_col)
@@ -94,14 +118,14 @@ def posthoc_dunn(
     x_len = x_groups_unique.size
     x_lens = x.groupby(_group_col, observed=False)[_val_col].count()
 
-    x['ranks'] = x[_val_col].rank()
-    x_ranks_avg = x.groupby(_group_col, observed=False)['ranks'].mean()
+    x["ranks"] = x[_val_col].rank()
+    x_ranks_avg = x.groupby(_group_col, observed=False)["ranks"].mean()
 
     # ties
-    vals = x.groupby('ranks', observed=False).count()[_val_col].values
+    vals = x.groupby("ranks", observed=False).count()[_val_col].values
     tie_sum = np.sum(vals[vals != 1] ** 3 - vals[vals != 1])
     tie_sum = 0 if not tie_sum else tie_sum
-    x_ties = tie_sum / (12. * (n - 1))
+    x_ties = tie_sum / (12.0 * (n - 1))
 
     vs = np.zeros((x_len, x_len))
     z_vals = np.zeros((x_len, x_len))
@@ -113,7 +137,7 @@ def posthoc_dunn(
     z_vals[:, :] = 0
 
     for i, j in combs:
-        vs[i, j], z_vals[i,j] = compare_dunn(x_groups_unique[i], x_groups_unique[j])
+        vs[i, j], z_vals[i, j] = compare_dunn(x_groups_unique[i], x_groups_unique[j])
 
     if p_adjust:
         vs[tri_upper] = multipletests(vs[tri_upper], method=p_adjust)[1]
@@ -122,7 +146,10 @@ def posthoc_dunn(
     z_vals[tri_lower] = np.transpose(z_vals)[tri_lower]
     np.fill_diagonal(vs, 1)
     np.fill_diagonal(z_vals, 1)
-    return pd.DataFrame(vs, index=x_groups_unique, columns=x_groups_unique), pd.DataFrame(z_vals, index=x_groups_unique, columns=x_groups_unique)
+    return pd.DataFrame(
+        vs, index=x_groups_unique, columns=x_groups_unique
+    ), pd.DataFrame(z_vals, index=x_groups_unique, columns=x_groups_unique)
+
 
 def get_asterisks_for_pval(p_val: float, alpha: float = 0.05) -> str:
     """Receives the p-value and returns asterisks string."""
@@ -140,6 +167,7 @@ def get_asterisks_for_pval(p_val: float, alpha: float = 0.05) -> str:
 
     return p_text  # string of asterisks
 
+
 def run_chisq_on_combination(df: object, combinations_tuple: list) -> float:
     """Receives a dataframe and a combinations tuple and returns p-value after performing chisq test."""
     assert (
@@ -150,6 +178,7 @@ def run_chisq_on_combination(df: object, combinations_tuple: list) -> float:
     ]
     chi2, p, dof, ex = chi2_contingency(new_df, correction=True)
     return p
+
 
 def chisq_and_posthoc_corrected(
     df: object, correction_method: str = "fdr_bh", alpha: float = 0.05
@@ -187,6 +216,7 @@ def chisq_and_posthoc_corrected(
             )
         )
 
+
 def get_p_values(*args: list) -> float:
     obs = np.array([*args])
     # print("normal - mild - moderate - severe")
@@ -195,6 +225,7 @@ def get_p_values(*args: list) -> float:
     print("Chi2 Ergebnis correction False:", p)
     chisq_and_posthoc_corrected(pd.DataFrame(obs))
     return p
+
 
 def return_table(df: object, var_list: list, dimensions: int = None) -> list:
     if dimensions == None:
@@ -205,7 +236,9 @@ def return_table(df: object, var_list: list, dimensions: int = None) -> list:
         # print(
         #     f"Table that is converted to an array:\n{df.groupby(var_list).size().unstack(fill_value=0).stack()}"
         # )
-        np_list = np.array(df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack())
+        np_list = np.array(
+            df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack()
+        )
 
     else:
         # print(f"Table that is converted to an array:\n{df.groupby(var_list).size()}")
@@ -216,6 +249,7 @@ def return_table(df: object, var_list: list, dimensions: int = None) -> list:
     # print(f"Splitted set that is returned based on {dimensions} dimensions:\n{result}")
     return result
 
+
 def return_dict(df: object, var_list: list, dimensions: int = None) -> list:
     if dimensions == None:
         dimensions = len(var_list)
@@ -224,11 +258,18 @@ def return_dict(df: object, var_list: list, dimensions: int = None) -> list:
         print(
             f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack()}"
         )
-        return df.groupby(var_list, observed=False).size().unstack(fill_value=0).stack().to_dict()
+        return (
+            df.groupby(var_list, observed=False)
+            .size()
+            .unstack(fill_value=0)
+            .stack()
+            .to_dict()
+        )
     print(
         f"Table that is converted to an dictionary and returned:\n{df.groupby(var_list, observed=False).size()}"
     )
     return df.groupby(var_list, observed=False).size().to_dict()
+
 
 def compare_frequencies(
     d: dict, exp: list = None, transpose: bool = True, pr: bool = True
@@ -331,10 +372,11 @@ def compare_frequencies(
 
     return p
 
+
 def unique_cross_product(list1, list2):
     result = []
     seen = set()
-    
+
     for a in list1:
         for b in list2:
             if a != b:  # keine Paare mit gleichen Zahlen
@@ -342,17 +384,20 @@ def unique_cross_product(list1, list2):
                 if pair not in seen:
                     seen.add(pair)
                     result.append(pair)
-    
+
     return result
+
 
 def effect_size(dataframe, agg, vals, row_indices, col_indices):
     # calculate effect size independently of p values
-    agg_vals = [x[0] for x in list(dataframe.groupby(agg, observed=False))] # how many distinct values exist for the aggregation/groupby
+    agg_vals = [
+        x[0] for x in list(dataframe.groupby(agg, observed=False))
+    ]  # how many distinct values exist for the aggregation/groupby
     effect_sizes = []
-    for (row_index, col_index) in unique_cross_product(row_indices, col_indices):
-    # for i in range(len(row_indices)):
-    #     row_index = row_indices[i]
-    #     col_index = col_indices[i]
+    for row_index, col_index in unique_cross_product(row_indices, col_indices):
+        # for i in range(len(row_indices)):
+        #     row_index = row_indices[i]
+        #     col_index = col_indices[i]
 
         n1 = len(dataframe.loc[dataframe[agg] == agg_vals[row_index], vals])
         s1 = np.std(dataframe.loc[dataframe[agg] == agg_vals[row_index], vals])
@@ -373,10 +418,10 @@ def effect_size(dataframe, agg, vals, row_indices, col_indices):
         # print(f"\n{row_index+1}, {col_index+1}: Effect size (Cohen, 1992): {round(r,2)} ({r_text})")
 
         # Hedge's g
-        pooled_s = np.sqrt(((n1-1)*s1**2+(n2-1)*s2**2)/(n1+n2-2))
+        pooled_s = np.sqrt(((n1 - 1) * s1**2 + (n2 - 1) * s2**2) / (n1 + n2 - 2))
         m1 = np.mean(dataframe.loc[dataframe[agg] == agg_vals[row_index], vals])
         m2 = np.mean(dataframe.loc[dataframe[agg] == agg_vals[col_index], vals])
-        d = np.abs(m1-m2)/pooled_s
+        d = np.abs(m1 - m2) / pooled_s
         if d <= 0.01:
             d_text = "none"
         elif d <= 0.2:
@@ -391,22 +436,27 @@ def effect_size(dataframe, agg, vals, row_indices, col_indices):
             d_text = "very large"
         else:
             d_text = "huge"
-        if d>=0.01:
-            print(f"\n{row_index+1}, {col_index+1}: Effect size: Hedges' g: {round(d,2)} ({d_text})")
+        if d >= 0.01:
+            print(
+                f"\n{row_index+1}, {col_index+1}: Effect size: Hedges' g: {round(d,2)} ({d_text})"
+            )
         else:
             print(f"\n{row_index+1}, {col_index+1}: Hedges' g <0.01")
         effect_sizes.append((row_index, col_index, d))
     return effect_sizes
 
+
 def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
     ph_dunn = 1
     if p < 0.05:
-        x = [group[vals].values for name, group in dataframe.groupby(agg, observed=False)]
+        x = [
+            group[vals].values for name, group in dataframe.groupby(agg, observed=False)
+        ]
         ph_dunn, zvalues = posthoc_dunn(x, p_adjust="fdr_bh", sort=True)
 
         if ((ph_dunn < 0.05).any()).any():
             print(sp.sign_table(ph_dunn))
-            pd.options.display.float_format = '{:.4f}'.format
+            pd.options.display.float_format = "{:.4f}".format
             print(ph_dunn)
 
             ## effect size
@@ -414,13 +464,34 @@ def posthoc_median(vals: list, dataframe: object, agg: str, p: float) -> None:
                 pd.DataFrame(sp.sign_table(ph_dunn)).isin(["*", "**", "***"])
             )
             print(effect_size(dataframe, agg, vals, row_indices, col_indices))
-            return (ph_dunn, effect_size(dataframe, agg, vals, row_indices, col_indices))
+            return (
+                ph_dunn,
+                effect_size(dataframe, agg, vals, row_indices, col_indices),
+            )
     elif ph_dunn >= 0.05:
         print("No significance found.")
         ## effect size
         agg_vals = [x[0] for x in list(dataframe.groupby(agg, observed=False))]
-        print(effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
-        return (None, effect_size(dataframe, agg, vals, list(range(len(agg_vals))), list(range(len(agg_vals)))))
+        print(
+            effect_size(
+                dataframe,
+                agg,
+                vals,
+                list(range(len(agg_vals))),
+                list(range(len(agg_vals))),
+            )
+        )
+        return (
+            None,
+            effect_size(
+                dataframe,
+                agg,
+                vals,
+                list(range(len(agg_vals))),
+                list(range(len(agg_vals))),
+            ),
+        )
+
 
 def posthoc_anova(vals: list, dataframe: object, agg: str) -> None:
     x = [group[vals].values for name, group in dataframe.groupby(agg, observed=False)]
@@ -431,9 +502,14 @@ def posthoc_anova(vals: list, dataframe: object, agg: str) -> None:
     else:
         print("No significance found.")
 
+
 def compare_median(vals: list, dataframe: object, agg: str, pr: bool = True) -> float:
     if pr:
-        print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
+        print(
+            dataframe.groupby([agg], observed=False).agg(
+                {vals: ["median", "mean", "count"]}
+            )
+        )
     try:
         z, p = kruskal(
             *[
@@ -449,11 +525,16 @@ def compare_median(vals: list, dataframe: object, agg: str, pr: bool = True) -> 
     if pr:
         print(f"p-value: {round(p,4)}")
     if p < 0.05:
-        if not pr: # print only if not printed before
-            print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
+        if not pr:  # print only if not printed before
+            print(
+                dataframe.groupby([agg], observed=False).agg(
+                    {vals: ["median", "mean", "count"]}
+                )
+            )
         print("\n... Post hoc test...")
     ph_dunn, effect_sizes = posthoc_median(vals, dataframe, agg, p)
     return p, ph_dunn, effect_sizes
+
 
 def compare_variance(vals, dataframe, agg, pr=True):
     if pr:
@@ -472,32 +553,119 @@ def compare_variance(vals, dataframe, agg, pr=True):
     if pr:
         print(f"p-value: {round(p,4)}")
     if p < 0.05:
-        print(dataframe.groupby([agg], observed=False).agg({vals: ["median", "mean", "count"]}))
+        print(
+            dataframe.groupby([agg], observed=False).agg(
+                {vals: ["median", "mean", "count"]}
+            )
+        )
         print("... Post hoc test...")
         posthoc_anova(vals, dataframe, agg)
     return p
 
-def logistic_regression(y, X, log=True, odds_ratio=False):
+
+def logistic_regression_statsmodels(y, X, log=True, odds_ratio=False):
     model = Logit(y, np.log(X) if log else X)
     result = model.fit(disp=0)
-    if result.prsquared<0:
-        print("Warning: Pseudo R-squared is negative, indicating a poor model fit.".upper())
-    if result.llnull<0:
-        print("Warning: Log-likelihood of the null model is negative, indicating a poor model fit.".upper())
+    if result.prsquared < 0:
+        print(
+            "Warning: Pseudo R-squared is negative, indicating a poor model fit.".upper()
+        )
+    if result.llnull < 0:
+        print(
+            "Warning: Log-likelihood of the null model is negative, indicating a poor model fit.".upper()
+        )
     print(result.summary())
     coef = result.params.values[0]
-    OR_10pct = np.exp(coef * np.log(1.1)) # odds ratio for 10% increase
+    OR_10pct = np.exp(coef * np.log(1.1))  # odds ratio for 10% increase
     ci_low, ci_high = result.conf_int().values[0]
 
-    OR_10pct_ci = (
-        np.exp(ci_low * np.log(1.1)),
-        np.exp(ci_high * np.log(1.1))
-    )
+    OR_10pct_ci = (np.exp(ci_low * np.log(1.1)), np.exp(ci_high * np.log(1.1)))
     # „Das normalisierte paO₂ wurde logarithmiert in das logistische Regressionsmodell aufgenommen. Die Odds Ratios beziehen sich auf eine multiplikative Änderung des paO₂. Eine 10% Erhöhung des paO₂ war mit einer OR von 0,XX (95 % KI 0,YY–0,ZZ) assoziiert.“
-    print(f"The estimated OR change by {OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}] for each 10% increase of the independent variable (p-value: {result.pvalues.values[0]:.4f})")
+    print(
+        f"The estimated OR change by {OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}] for each 10% increase of the independent variable (p-value: {result.pvalues.values[0]:.4f})"
+    )
     if odds_ratio:
-        return result.pvalues.values[0], OR_10pct# f"{OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}]"
+        return (
+            result.pvalues.values[0],
+            OR_10pct,
+        )  # f"{OR_10pct:.4f} [{OR_10pct_ci[0]:.4f}, {OR_10pct_ci[1]:.4f}]"
     return result.pvalues.values[0]
+
+
+def logistic_regression(y, X, log=True, intercept_fitting=False, odds_ratio=False):
+    model = LogisticRegression(
+        fit_intercept=intercept_fitting,
+        random_state=42,
+        class_weight="balanced",
+        max_iter=1000,
+    )
+    X_input = (
+        np.log(X).to_numpy().reshape(-1, 1) if log else X.to_numpy().reshape(-1, 1)
+    )
+    model.fit(X_input, y)
+    # intercept = model.intercept_[0]
+    coef = model.coef_[0][0]
+    coefs = np.r_[[model.intercept_], model.coef_].flatten()
+    accuracy = model.score(X_input, y)
+    alpha = 0.05 # for 95% confidence interval; use 0.01 for 99%-CI.
+    # build an auxiliary dataframe with the constant term in it
+    if accuracy < 0.5:
+        print(
+            f"Warning: Model accuracy is below 0.5 ({accuracy:.4f}), indicating a poor model fit.".upper()
+        )
+    X_aux = pd.DataFrame(X_input, columns = [X.name]).copy()
+    X_aux.insert(0, 'const', 1)
+    # degrees of freedom
+    dof = -np.diff(X_aux.shape)[0]
+    # Student's t-distribution table lookup
+    t_val = stats.t.isf(alpha/2, dof)
+    # MSE of the residuals
+    mse = np.sum((y.astype(np.float32) - model.predict(X_input).astype(np.float32)) ** 2) / dof
+    # inverse of the variance of the parameters
+    var_params = np.diag(np.linalg.inv(X_aux.T.dot(X_aux)))
+    # distance between lower and upper bound of CI
+    gap = t_val * np.sqrt(mse * var_params)
+
+    if log:
+        conf_int = pd.DataFrame({'lower': np.exp((coefs - gap) * np.log(1.1)), 'upper': np.exp((coefs + gap) * np.log(1.1))}, index=X_aux.columns)
+        odds_r = np.exp(coef * np.log(1.1))  # odds ratio for 10% increase
+    else:
+        conf_int = pd.DataFrame({'lower': np.exp((coefs - gap)), 'upper': np.exp((coefs + gap))}, index=X_aux.columns)
+        odds_r = np.exp(coef)  # odds ratio for 10% increase
+    print(conf_int)
+
+    or_ci = conf_int.loc[conf_int.index[-1],:].values
+
+    or_const = np.exp(coefs[0])
+    orci_const = conf_int.loc['const', :].values
+
+    sign = not(or_ci[0] <= 1 <= or_ci[1])
+
+    # p-values calculation
+    probabilities = model.predict_proba(X_input)[:, 1] # keep only prob of class 1
+    wald = np.diag(probabilities * (1 - probabilities))
+    fisher = np.array(X_aux).T @ wald @ np.array(X_aux)
+    vcov = np.linalg.inv(fisher)
+    se = np.sqrt(np.diag(vcov))
+    se_j = se[1] # standard error (index 1 = feature)
+    se_const = se[0]  # standard error of intercept
+    z = coef / se_j
+    z_const = coefs[0] / se_const
+    p_value = 2 * (1 - snorm.cdf(abs(z)))
+    p_value_const = 2 * (1 - snorm.cdf(abs(z_const)))
+    if log:
+        print(
+            f"The estimated odds for {y.name} change by {odds_r:.4f} [{or_ci[0]:.4f}, {or_ci[1]:.4f}] for each 10% increase of {X.name} (accuracy: {accuracy:.4f}, p-value: {p_value:.4f})."
+        )
+    else:
+        print(
+            f"The estimated odds for {y.name} change by {odds_r:.4f} [{or_ci[0]:.4f}, {or_ci[1]:.4f}] for each one unit increase of {X.name} (accuracy: {accuracy:.4f}, p-value: {p_value:.4f})."
+        )
+
+    if odds_ratio:
+        return p_value, odds_r, or_ci, accuracy, f"{or_const:.4f} [{orci_const[0]:.4f}, {orci_const[1]:.4f}]"
+    return p_value, accuracy, f"{or_const:.4f} [{orci_const[0]:.4f}, {orci_const[1]:.4f}]"
+
 
 def qq_plot(data, title=None, axs=None):
     """Generate a QQ plot of the data against a normal distribution."""
@@ -509,7 +677,7 @@ def qq_plot(data, title=None, axs=None):
     if title:
         fig.suptitle(title, fontsize=16)
     else:
-        fig.suptitle('QQ Plots', fontsize=16)
+        fig.suptitle("QQ Plots", fontsize=16)
     axs[0].set_title("Data")
     axs[1].set_title("Log-transformed Data")
     axs[0].grid(True)
