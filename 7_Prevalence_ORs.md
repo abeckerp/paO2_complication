@@ -1,8 +1,7 @@
-# Continuous $paO_2$ Prediction and Postoperative Complications in Neurosurgical Patients
-## Prevalences and Odds Ratios of Postoperative Complications by Underlying Disease
-
+# Continuous $paO_2$ Prediction and Postoperative Complications in
+Neurosurgical Patients
 Andrea S. Gutmann
-2026-02-02
+2026-03-03
 
 # Preprocessing
 
@@ -183,7 +182,7 @@ for d in diagnoses:
 
 
 display(prev_df[prev_df['p_value']<0.05])
-prev_df[prev_df['p_value']<0.05].drop('p_value', axis=1).rename({'disease': 'Disease', 'complication': 'Complication', 'With disease': 'Prevalence with disease', 'Other disease': 'Prevalence with other disease', 'odds_ratio': 'Odds Ratio', 'ci': '95 % CI', 'p_value_text': 'p value'}).to_csv("./data/out/sdc7_table.csv")
+prev_df[prev_df['p_value']<0.05].drop('p_value', axis=1).rename({'disease': 'Disease', 'complication': 'Complication', 'With disease': 'Prevalence with disease', 'Other disease': 'Prevalence with other disease', 'odds_ratio': 'Odds Ratio', 'ci': '95 % CI', 'p_value_text': 'p value'}).to_csv("./data/out/si7_table.csv")
 ```
 
 

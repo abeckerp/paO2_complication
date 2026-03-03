@@ -1,7 +1,7 @@
 # Continuous $paO_2$ Prediction and Postoperative Complications in
 Neurosurgical Patients
 Andrea S. Gutmann
-2026-02-09
+2026-03-03
 
 # Preprocessing
 
@@ -88,7 +88,7 @@ print(f"p-value for normal distribution of norm_paO2 is {pvalue:.4f} => not norm
 
     p-value for normal distribution of norm_paO2 is 0.0000 => not normally distributed.
 
-Figure SDC1
+Figure S3
 
 ``` python
 selected_identifiers = list(map(lambda x: x[0], list(sorted(Counter(data["identifier"]).items(),key = lambda x:x[1]))[-5:]))
@@ -124,6 +124,7 @@ ax.set_ylim(0)
 ax.legend()
 
 plt.savefig(f"./plots/pao2_auc_example.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"./plots/s3_fig.png", dpi=300, bbox_inches="tight")
 ax.set_title("Measured and predicted $paO_2$ values of a patient")
 
 plt.show()
@@ -137,9 +138,9 @@ plt.show()
     1019888
 
 ![Example of AUC calculation of measured and predicted paO2
-values.](5_Patient_characteristics_files/figure-commonmark/figure_sdc1-output-2.png)
+values.](5_Patient_characteristics_files/figure-commonmark/figure_s3-output-2.png)
 
-Figure SDC2
+Figure S6
 
 ``` python
 avg_data = (
@@ -190,13 +191,15 @@ g.set_axis_labels("Mean of measured and predicted $paO_2$ (mmHg)",
                   "Predicted − Measured $paO_2$ (mmHg)")
 
 plt.savefig(f"./plots/bland-altman-density.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"./plots/s6_fig.png", dpi=300, bbox_inches="tight")
+
 g.fig.suptitle("Bland–Altman plot with distribution of differences", y=0.89)
 
 plt.show()
 ```
 
 ![Bland–Altman plot with distribution of
-differences.](5_Patient_characteristics_files/figure-commonmark/figure_sdc2-output-1.png)
+differences.](5_Patient_characteristics_files/figure-commonmark/figure_s6-output-1.png)
 
 # Patient Characteristics
 
@@ -886,31 +889,31 @@ print(
     Patients with two postoperative complications: 109 (2.2 %).
     Patients with three or more postoperative complications: 31 (0.6 %).
 
-SDC 5
+Table S7
 
 ``` python
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-sdc5_data = []
-sdc5_figure_data = []
+s7_data = []
+s7_figure_data = []
 annot_data = []
 
 for c, (n,p) in sorted(compl_dict.items(), key=lambda x: -x[1][0]):    
-    sdc5_row = []
+    s7_row = []
     annot_row = []
-    sdc5_figure_row = []
+    s7_figure_row = []
     for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0]):
         cell_count = analysis_df.loc[(analysis_df[d] == True) & (analysis_df[c] == True), :].shape[0]
-        sdc5_row.append(cell_count)
+        s7_row.append(cell_count)
         annot_row.append(f"{100/n*cell_count:.1f}%\n(N={cell_count})")
-        sdc5_figure_row.append(100/n*cell_count)
-    sdc5_data.append(sdc5_row)
+        s7_figure_row.append(100/n*cell_count)
+    s7_data.append(s7_row)
     annot_data.append(annot_row)
-    sdc5_figure_data.append(sdc5_figure_row)
+    s7_figure_data.append(s7_figure_row)
 
-sdc5 = pd.DataFrame(
-    np.array(sdc5_data).T,
+s7 = pd.DataFrame(
+    np.array(s7_data).T,
     index=[
         f"{config.get('long_names').get(d)} (N={n:,})"
         for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0])
@@ -920,8 +923,8 @@ sdc5 = pd.DataFrame(
         for c, (n,p) in sorted(compl_dict.items(), key=lambda x: -x[1][0])
     ],
 )
-sdc5_figure = pd.DataFrame(
-    np.array(sdc5_figure_data).T,
+s7_figure = pd.DataFrame(
+    np.array(s7_figure_data).T,
     index=[
         f"{config.get('long_names').get(d)} (N={n:,})"
         for d, (n,p) in sorted(diag_dict.items(), key=lambda x: -x[1][0])
@@ -932,10 +935,11 @@ sdc5_figure = pd.DataFrame(
     ],
 )
 
-display(sdc5)
-display(sdc5_figure)
+display(s7)
+display(s7_figure)
 
-sdc5.to_csv("./data/out/diag_comp.csv")
+s7.to_csv("./data/out/diag_comp.csv")
+s7.to_csv("./data/out/s7_table.csv")
 ```
 
 <div>
@@ -1000,7 +1004,7 @@ Figure 2
 
 ``` python
 ax = sns.heatmap(
-    sdc5_figure,
+    s7_figure,
     linewidth=0.5,
     annot=np.array(annot_data).T,
     cmap="gray_r",

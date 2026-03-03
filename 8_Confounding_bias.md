@@ -1,8 +1,7 @@
-# Continuous $paO_2$ Prediction and Postoperative Complications in Neurosurgical Patients
-## Confounding Assessment
-
+# Continuous $paO_2$ Prediction and Postoperative Complications in
+Neurosurgical Patients
 Andrea S. Gutmann
-2026-02-02
+2026-03-03
 
 # Preprocessing
 
@@ -81,7 +80,7 @@ print(f"Correlation of normOMV and age: Spearman's rho: {rho:.4f} (p-value: {pva
     Correlation of normFiO2 and age: Spearman's rho: 0.1702 (p-value: 0.0000)
     Correlation of normOMV and age: Spearman's rho: 0.0120 (p-value: 0.3965)
 
-Figure SDC3
+Figure SI3
 
 ``` python
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -114,6 +113,7 @@ axes[1].set_title("Relationship between Age and $_{norm}paO_2$", fontsize=14)
 
 plt.tight_layout()
 plt.savefig('plots/age_fio2_pao2.png', dpi=300, bbox_inches="tight")
+plt.savefig('plots/si3_fig.png', dpi=300, bbox_inches="tight")
 
 plt.show()
 ```

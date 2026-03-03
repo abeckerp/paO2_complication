@@ -1,8 +1,7 @@
-# Continuous $paO_2$ Prediction and Postoperative Complications in Neurosurgical Patients
-## Calculate AUC of $paO_2$ over mechanical ventilation time
-
+# Continuous $paO_2$ Prediction and Postoperative Complications in
+Neurosurgical Patients
 Andrea S. Gutmann
-2026-01-28
+2026-03-03
 
 ## Loading required libraries
 
@@ -112,7 +111,7 @@ with open(Path(config.get('pickle').get('paO2_imputed_data')),'wb') as f:
     pickle.dump(data, f)
 ```
 
-    /var/folders/ff/zlqg1pks12q23nf7rf3m7j3r0000gn/T/ipykernel_34234/3535474277.py:16: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+    /var/folders/ff/zlqg1pks12q23nf7rf3m7j3r0000gn/T/ipykernel_18706/3535474277.py:16: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
       data['paO2_combined'] = data['paO2_predicted_x'].fillna(data['paO2_predicted_y'])
 
 ## Data Cleaning
